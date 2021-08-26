@@ -124,22 +124,22 @@ def get_readable_message():
                 if download.status() != MirrorStatus.STATUS_ARCHIVING and download.status() != MirrorStatus.STATUS_EXTRACTING:
                     msg += f"\n<code>{get_progress_bar_string(download)} {download.progress()}</code>"
                     if download.status() == MirrorStatus.STATUS_CLONING:
-                        msg += f"\n<b>Cloned:</b> {get_readable_file_size(download.processed_bytes())} of {download.size()}"
+                        msg += f"\n<b>Cloned:</b> <code>{get_readable_file_size(download.processed_bytes())}</code> of <code>{download.size()}</code>"
                     elif download.status() == MirrorStatus.STATUS_UPLOADING:
-                        msg += f"\n<b>Uploaded:</b> {get_readable_file_size(download.processed_bytes())} of {download.size()}"
+                        msg += f"\n<b>Uploaded:</b> <code>{get_readable_file_size(download.processed_bytes())}</code> of <code>{download.size()}</code>"
                     else:
-                        msg += f"\n<b>Downloaded:</b> {get_readable_file_size(download.processed_bytes())} of {download.size()}"
-                    msg += f"\n<b>Speed:</b> {download.speed()}" \
-                            f", <b>ETA:</b> {download.eta()} "
+                        msg += f"\n<b>Downloaded:</b> <code>{get_readable_file_size(download.processed_bytes())}</code> of <code>{download.size()}</code>"
+                    msg += f"\n<b>Speed:</b> <code>{download.speed()}</code>" \
+                            f", <b>ETA:</b> <code>{download.eta()}</code> "
                     # if hasattr(download, 'is_torrent'):
                     try:
-                        msg += f"\n<b>Seeders:</b> {download.aria_download().num_seeders}" \
-                            f" | <b>Peers:</b> {download.aria_download().connections}"
+                        msg += f"\n<b>Seeders:</b> <code>{download.aria_download().num_seeders}</code>" \
+                            f" | <b>Peers:</b> <code>{download.aria_download().connections}</code>"
                     except:
                         pass
                     try:
-                        msg += f"\n<b>Seeders:</b> {download.torrent_info().num_seeds}" \
-                            f" | <b>Leechers:</b> {download.torrent_info().num_leechs}"
+                        msg += f"\n<b>Seeders:</b> <code>{download.torrent_info().num_seeds}</code>" \
+                            f" | <b>Leechers:</b> <code>{download.torrent_info().num_leechs}</code>"
                     except:
                         pass
                     msg += f"\n<b>To Stop:</b> <code>/{BotCommands.CancelMirror} {download.gid()}</code>"
@@ -151,7 +151,7 @@ def get_readable_message():
             if INDEX > COUNT + STATUS_LIMIT:
                 return None, None
             if dick_no > STATUS_LIMIT:
-                msg += f"Page: {PAGE_NO}/{pages} | Tasks: {dick_no}\n"
+                msg += f"Page: <code>{PAGE_NO}/{pages}</code> | <code>Tasks: {dick_no}</code>\n"
                 buttons = button_build.ButtonMaker()
                 buttons.sbutton("Previous", "pre")
                 buttons.sbutton("Next", "nex")
@@ -180,6 +180,20 @@ def flip(update, context):
             PAGE_NO -= 1
     message_utils.update_all_messages()
 
+
+def check_limit(size, limit, tar_unzip_limit=None, is_tar_ext=False):
+    LOGGER.info(f"Checking File/Folder Size...")
+    if is_tar_ext and tar_unzip_limit is not None:
+        limit = tar_unzip_limit
+    if limit is not None:
+        limit = limit.split(' ', maxsplit=1)
+        limitint = int(limit[0])
+        if 'G' in limit[1] or 'g' in limit[1]:
+            if size > limitint * 1024**3:
+                return True
+        elif 'T' in limit[1] or 't' in limit[1]:
+            if size > limitint * 1024**4:
+                return True
 
 def get_readable_time(seconds: int) -> str:
     result = ''

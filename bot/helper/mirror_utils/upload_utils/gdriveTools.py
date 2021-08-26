@@ -8,6 +8,7 @@ import re
 import json
 import requests
 import logging
+import time
 from random import randrange
 
 from google.auth.transport.requests import Request
@@ -23,7 +24,7 @@ from bot.helper.telegram_helper import button_build
 from telegraph import Telegraph
 from bot import parent_id, DOWNLOAD_DIR, IS_TEAM_DRIVE, INDEX_URL, \
     USE_SERVICE_ACCOUNTS, telegraph_token, BUTTON_FOUR_NAME, BUTTON_FOUR_URL, BUTTON_FIVE_NAME, BUTTON_FIVE_URL, BUTTON_SIX_NAME, BUTTON_SIX_URL, SHORTENER, SHORTENER_API, VIEW_LINK
-from bot.helper.ext_utils.bot_utils import *
+from bot.helper.ext_utils.bot_utils import get_readable_file_size, setInterval
 from bot.helper.ext_utils.fs_utils import get_mime_type, get_path_size
 
 LOGGER = logging.getLogger(__name__)
@@ -117,7 +118,7 @@ class GoogleDriveHelper:
                                      resumable=False)
         file_metadata = {
             'name': file_name,
-            'description': 'Uploaded using Slam Tg Mirror Bot',
+            'description': 'Uploaded using Slam Mirrorbot',
             'mimeType': mime_type,
         }
         if parent_id is not None:
@@ -171,7 +172,7 @@ class GoogleDriveHelper:
         # File body description
         file_metadata = {
             'name': file_name,
-            'description': 'Uploaded by Slam Tg Mirror Bot',
+            'description': 'Uploaded by Slam Mirrorbot',
             'mimeType': mime_type,
         }
         try:
@@ -510,10 +511,9 @@ class GoogleDriveHelper:
                 mime_type = get_mime_type(current_file_name)
                 file_name = current_file_name.split("/")[-1]
                 # current_file_name will have the full path
-                if not file_name.endswith(".!qB"):
-                    self.upload_file(current_file_name, file_name, mime_type, parent_id)
-                    self.total_files += 1
-                    new_id = parent_id
+                self.upload_file(current_file_name, file_name, mime_type, parent_id)
+                self.total_files += 1
+                new_id = parent_id
             if self.is_cancelled:
                 break
         return new_id
@@ -558,9 +558,9 @@ class GoogleDriveHelper:
                     content += f'<b> | <a href="https://telegra.ph/{self.path[nxt_page]}">Next</a></b>'
                     nxt_page += 1
             Telegraph(access_token=telegraph_token).edit_page(path = self.path[prev_page],
-                                 title = 'Slam Tg Mirror Bot Search',
-                                 author_name='Slam Tg Mirror Bot',
-                                 author_url='https://github.com/breakdowns/slam-tg-mirror-bot',
+                                 title = 'Slam Mirrorbot Search',
+                                 author_name='Slam Mirrorbot',
+                                 author_url='https://github.com/SlamDevs/slam-mirrorbot',
                                  html_content=content)
         return
 
@@ -643,9 +643,9 @@ class GoogleDriveHelper:
 
             for content in self.telegraph_content :
                 self.path.append(Telegraph(access_token=telegraph_token).create_page(
-                                                        title = 'Slam Tg Mirror Bot Search',
-                                                        author_name='Slam Tg Mirror Bot',
-                                                        author_url='https://github.com/breakdowns/slam-tg-mirror-bot',
+                                                        title = 'Slam Mirrorbot Search',
+                                                        author_name='Slam Mirrorbot',
+                                                        author_url='https://github.com/SlamDevs/slam-mirrorbot',
                                                         html_content=content
                                                         )['path'])
 
@@ -653,7 +653,7 @@ class GoogleDriveHelper:
             if self.num_of_path > 1:
                 self.edit_telegraph()
 
-            msg = f"<b>Found {len(response['files'])} results for <i>{fileName}</i></b>"
+            msg = f"<b>Found <code>{len(response['files'])}</code> results for <code>{fileName}</code></b>"
             buttons = button_build.ButtonMaker()   
             buttons.buildbutton("🔎 VIEW", f"https://telegra.ph/{self.path[0]}")
 
@@ -730,7 +730,7 @@ class GoogleDriveHelper:
             file_id = self.getIdFromUrl(link)
         except (KeyError,IndexError):
             msg = "Google Drive ID could not be found in the provided link"
-            return msg, "", ""
+            return msg, "", "", ""
         LOGGER.info(f"File ID: {file_id}")
         try:
             drive_file = self.__service.files().get(fileId=file_id, fields="id, name, mimeType, size",
